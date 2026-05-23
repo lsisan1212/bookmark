@@ -43,6 +43,8 @@
   }
   .search:focus{outline:none;border-color:var(--accent)}
   main{max-width:1400px;margin:24px auto;padding:0 24px}
+  
+  /* Folder Styles */
   .folder{
     background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
     margin-bottom:16px;overflow:hidden;transition:all .2s;
@@ -54,16 +56,11 @@
   }
   .folder.collapsed .folder-head{border-bottom:none}
   .folder-head:hover{background:var(--border)}
-  .chevron{
-    transition:transform .2s;color:var(--text-dim);font-size:12px;flex-shrink:0;
-  }
+  .chevron{transition:transform .2s;color:var(--text-dim);font-size:12px;flex-shrink:0;}
   .folder.collapsed .chevron{transform:rotate(-90deg)}
   .folder-icon{font-size:18px;flex-shrink:0}
   .folder-name{font-weight:600;font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .folder-count{
-    font-size:11px;color:var(--text-dim);background:var(--bg);
-    padding:2px 8px;border-radius:10px;
-  }
+  .folder-count{font-size:11px;color:var(--text-dim);background:var(--bg);padding:2px 8px;border-radius:10px;}
   .folder-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
   .folder-head:hover .folder-actions{opacity:1}
   .icon-btn{
@@ -72,11 +69,47 @@
   }
   .icon-btn:hover{background:var(--bg);color:var(--text)}
   .icon-btn.del:hover{color:var(--danger)}
+  
+  /* Folder Body & Grid/List System */
   .folder-body{
-    padding:16px;display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));
-    gap:12px;max-height:3000px;transition:max-height .3s ease,padding .3s ease,opacity .2s;
+    padding:16px;
+    display:grid;
+    gap:12px;
+    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
+    max-height: var(--max-h, none);
+    overflow-y: auto;
+    transition:max-height .3s ease,padding .3s ease,opacity .2s;
   }
-  .folder.collapsed .folder-body{max-height:0;padding:0 16px;opacity:0;pointer-events:none}
+  .folder.collapsed .folder-body{max-height:0 !important;padding:0 16px;opacity:0;pointer-events:none;overflow:hidden}
+  
+  /* Custom Scrollbar */
+  .folder-body::-webkit-scrollbar{width:8px;height:8px}
+  .folder-body::-webkit-scrollbar-track{background:transparent}
+  .folder-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
+  .folder-body::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+
+  /* List View Overrides */
+  .folder-body.list-view{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    padding:8px;
+  }
+  .folder-body.list-view .bookmark{
+    flex-direction:row;
+    align-items:center;
+    min-height:40px;
+    padding:8px 12px;
+    gap:12px;
+  }
+  .folder-body.list-view .bm-top{flex:1;min-width:0;}
+  .folder-body.list-view .bm-title{-webkit-line-clamp:1;white-space:nowrap;}
+  .folder-body.list-view .bm-url{flex:0 0 250px;max-width:30%;font-size:12px;}
+  .folder-body.list-view .bm-note{display:none;}
+  .folder-body.list-view .bm-actions{position:static;opacity:0;background:transparent;padding:0;}
+  .folder-body.list-view .bookmark:hover .bm-actions{opacity:1;}
+
+  /* Bookmark Card */
   .bookmark{
     background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius);
     padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;
@@ -84,13 +117,13 @@
     min-height:100px;
   }
   .bookmark:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
+  .folder-body.list-view .bookmark:hover{transform:none;box-shadow:none;background:var(--border)}
   .bookmark.dragging{opacity:.4}
   .bookmark.drag-over{border-color:var(--accent);border-style:dashed}
   .bm-top{display:flex;gap:8px;align-items:flex-start}
   .bm-fav{
     width:24px;height:24px;border-radius:4px;background:var(--bg);flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;font-size:12px;
-    overflow:hidden;
+    display:flex;align-items:center;justify-content:center;font-size:12px;overflow:hidden;
   }
   .bm-fav img{width:100%;height:100%;object-fit:contain}
   .bm-title{
@@ -98,31 +131,26 @@
     display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
     overflow:hidden;flex:1;word-break:break-word;
   }
-  .bm-url{
-    font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;
-    white-space:nowrap;
-  }
+  .bm-url{font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .bm-note{font-size:11px;color:var(--text-dim);line-height:1.4;margin-top:2px}
   .bm-actions{
     position:absolute;top:6px;right:6px;display:flex;gap:2px;
     opacity:0;transition:opacity .15s;background:var(--panel);border-radius:6px;padding:2px;
   }
   .bookmark:hover .bm-actions{opacity:1}
-  .empty-state{
-    grid-column:1/-1;text-align:center;padding:40px;color:var(--text-dim);
-    border:2px dashed var(--border);border-radius:var(--radius);
-  }
+  
+  .empty-state{grid-column:1/-1;text-align:center;padding:40px;color:var(--text-dim);border:2px dashed var(--border);border-radius:var(--radius);}
   .add-bookmark{
     border:2px dashed var(--border);background:transparent;color:var(--text-dim);
-    display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;
-    min-height:100px;
+    display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;min-height:100px;
   }
+  .folder-body.list-view .add-bookmark{min-height:40px;border:1px dashed var(--border);border-radius:6px;}
   .add-bookmark:hover{border-color:var(--accent);color:var(--accent);background:transparent;transform:none}
+  
   /* Modal */
   .modal-bg{
     position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;
-    display:none;align-items:center;justify-content:center;padding:20px;
-    backdrop-filter:blur(4px);
+    display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);
   }
   .modal-bg.show{display:flex}
   .modal{
@@ -138,7 +166,10 @@
   }
   .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent)}
   .field textarea{resize:vertical;min-height:60px}
+  .radio-group{display:flex;gap:16px;margin-top:4px;}
+  .radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text);font-size:13px;}
   .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
+  
   .toast{
     position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
     background:var(--panel-2);border:1px solid var(--border);padding:12px 20px;
@@ -146,16 +177,16 @@
     box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s;
   }
   .toast.show{opacity:1}
-  .empty-all{
-    text-align:center;padding:80px 20px;color:var(--text-dim);
-  }
+  .empty-all{text-align:center;padding:80px 20px;color:var(--text-dim);}
   .empty-all h2{color:var(--text);margin-bottom:12px}
+  
   @media (max-width:640px){
     header{padding:10px 12px}
     .search{width:100%;order:10}
     main{padding:0 12px}
-    .folder-body{grid-template-columns:repeat(auto-fill,minmax(140px,1fr))}
+    .folder-body{--cols: 2 !important;}
     .folder-actions{opacity:1}
+    .folder-body.list-view .bm-url{flex:0 0 120px;max-width:40%;}
   }
 </style>
 </head>
@@ -187,7 +218,24 @@
       <label>名稱</label>
       <input id="fName" placeholder="例如：工作、學習、娛樂" />
     </div>
+    <hr style="border-color:var(--border);margin:16px 0;">
+    <div class="field">
+      <label>顯示模式</label>
+      <div class="radio-group">
+        <label><input type="radio" name="fViewMode" value="grid" checked /> 📊 網格 (Grid)</label>
+        <label><input type="radio" name="fViewMode" value="list" /> 📋 列表 (List)</label>
+      </div>
+    </div>
+    <div class="field">
+      <label>欄數 (Columns，僅網格模式生效，1~10)</label>
+      <input type="number" id="fCols" min="1" max="10" value="4" />
+    </div>
+    <div class="field">
+      <label>最大列數 (Max Rows，0 = 不限制，超過會顯示捲軸)</label>
+      <input type="number" id="fRows" min="0" max="20" value="0" />
+    </div>
     <div class="modal-actions">
+      <button class="btn danger" id="fDeleteBtn" onclick="deleteFolder()" style="margin-right:auto;display:none">刪除資料夾</button>
       <button class="btn" onclick="closeModal('folderModal')">取消</button>
       <button class="btn primary" onclick="saveFolder()">儲存</button>
     </div>
@@ -215,7 +263,7 @@
       <select id="bFolder"></select>
     </div>
     <div class="modal-actions">
-      <button class="btn danger" id="bDeleteBtn" onclick="deleteBookmark()" style="margin-right:auto">刪除</button>
+      <button class="btn danger" id="bDeleteBtn" onclick="deleteBookmark()" style="margin-right:auto;display:none">刪除</button>
       <button class="btn" onclick="closeModal('bookmarkModal')">取消</button>
       <button class="btn primary" onclick="saveBookmark()">儲存</button>
     </div>
@@ -228,55 +276,61 @@
 const STORAGE_KEY = 'bm_data_v1';
 let state = { folders: [] };
 let editingFolderId = null;
-let editingBookmark = null; // {folderId, bookmarkId}
+let editingBookmark = null; 
 let searchTerm = '';
 
-// ====== Storage ======
 function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
 function load() {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) state = JSON.parse(raw);
-    else seedDemo();
+    if (raw) {
+      state = JSON.parse(raw);
+      // Migration for older data
+      state.folders.forEach(f => {
+        f.viewMode = f.viewMode || 'grid';
+        f.columns = f.columns || 4;
+        f.maxRows = f.maxRows || 0;
+      });
+    } else seedDemo();
   } catch(e) { seedDemo(); }
 }
 function seedDemo(){
   state = { folders: [
-    { id: uid(), name: '常用', icon: '⭐', collapsed: false, bookmarks: [
+    { id: uid(), name: '常用', icon: '⭐', collapsed: false, viewMode: 'grid', columns: 5, maxRows: 0, bookmarks: [
       { id: uid(), title: 'Google', url: 'https://google.com', note: '' },
       { id: uid(), title: 'GitHub', url: 'https://github.com', note: '程式碼倉庫' },
       { id: uid(), title: 'YouTube', url: 'https://youtube.com', note: '' },
     ]},
-    { id: uid(), name: '工作', icon: '💼', collapsed: false, bookmarks: [
+    { id: uid(), name: '工作 (List 模式)', icon: '💼', collapsed: false, viewMode: 'list', columns: 1, maxRows: 5, bookmarks: [
       { id: uid(), title: 'Gmail', url: 'https://mail.google.com', note: '' },
+      { id: uid(), title: 'Notion', url: 'https://notion.so', note: '' },
+      { id: uid(), title: 'Trello', url: 'https://trello.com', note: '' },
     ]},
-    { id: uid(), name: '學習', icon: '📖', collapsed: true, bookmarks: [] },
+    { id: uid(), name: '學習 (限制 2 列)', icon: '📖', collapsed: false, viewMode: 'grid', columns: 4, maxRows: 2, bookmarks: [
+      { id: uid(), title: 'MDN', url: 'https://developer.mozilla.org', note: '' },
+      { id: uid(), title: 'StackOverflow', url: 'https://stackoverflow.com', note: '' },
+      { id: uid(), title: 'CSS-Tricks', url: 'https://css-tricks.com', note: '' },
+      { id: uid(), title: 'DevDocs', url: 'https://devdocs.io', note: '' },
+      { id: uid(), title: 'Coursera', url: 'https://coursera.org', note: '' },
+    ]},
   ]};
   save();
 }
 function uid(){ return Math.random().toString(36).slice(2,10); }
 
-// ====== Render ======
 function render() {
   const main = document.getElementById('main');
   main.innerHTML = '';
   const q = searchTerm.toLowerCase().trim();
 
   if (state.folders.length === 0) {
-    main.innerHTML = `<div class="empty-all">
-      <h2>📚 還沒有任何書籤</h2>
-      <p>點上方的「＋ 新資料夾」開始，或匯入你的瀏覽器書籤</p>
-    </div>`;
+    main.innerHTML = `<div class="empty-all"><h2>📚 還沒有任何書籤</h2><p>點上方的「＋ 新資料夾」開始，或匯入你的瀏覽器書籤</p></div>`;
     return;
   }
 
   state.folders.forEach(folder => {
     let bms = folder.bookmarks;
-    if (q) bms = bms.filter(b =>
-      b.title.toLowerCase().includes(q) ||
-      b.url.toLowerCase().includes(q) ||
-      (b.note||'').toLowerCase().includes(q)
-    );
+    if (q) bms = bms.filter(b => b.title.toLowerCase().includes(q) || b.url.toLowerCase().includes(q) || (b.note||'').toLowerCase().includes(q));
     if (q && bms.length === 0 && !folder.name.toLowerCase().includes(q)) return;
 
     const el = document.createElement('div');
@@ -300,6 +354,15 @@ function render() {
       }
     };
 
+    const isList = folder.viewMode === 'list';
+    const cols = folder.columns || 4;
+    const maxRows = folder.maxRows || 0;
+    let maxHeight = 'none';
+    if (maxRows > 0) {
+      const rowH = isList ? 44 : 112; // Approximate height + gap
+      maxHeight = (maxRows * rowH) + 'px';
+    }
+
     el.innerHTML = `
       <div class="folder-head" onclick="toggleFolder('${folder.id}')">
         <span class="chevron">▼</span>
@@ -307,16 +370,17 @@ function render() {
         <span class="folder-name">${escape(folder.name)}</span>
         <span class="folder-count">${folder.bookmarks.length}</span>
         <div class="folder-actions" onclick="event.stopPropagation()">
-          <button class="icon-btn" onclick="openFolderModal('${folder.id}')" title="編輯">✏️</button>
+          <button class="icon-btn" onclick="toggleView('${folder.id}')" title="切換視圖">${isList ? '📊' : '📋'}</button>
+          <button class="icon-btn" onclick="openFolderModal('${folder.id}')" title="設定">⚙️</button>
           <button class="icon-btn" onclick="openBookmarkModal('${folder.id}')" title="新增書籤">＋</button>
           <button class="icon-btn del" onclick="deleteFolder('${folder.id}')" title="刪除">🗑️</button>
         </div>
       </div>
-      <div class="folder-body"></div>
+      <div class="folder-body ${isList ? 'list-view' : ''}" style="--cols:${cols}; --max-h:${maxHeight};"></div>
     `;
     const body = el.querySelector('.folder-body');
     bms.forEach(bm => body.appendChild(renderBookmark(folder.id, bm)));
-    // add bookmark button
+    
     const addBtn = document.createElement('button');
     addBtn.className = 'bookmark add-bookmark';
     addBtn.innerHTML = '＋ 新增書籤';
@@ -335,7 +399,7 @@ function renderBookmark(folderId, bm) {
   a.dataset.bmId = bm.id;
   a.dataset.folderId = folderId;
   a.draggable = true;
-  a.onclick = e => { if (e.detail === 2) { e.preventDefault(); openBookmarkModal(folderId, bm.id); }}; // double-click edit
+  a.onclick = e => { if (e.detail === 2) { e.preventDefault(); openBookmarkModal(folderId, bm.id); }};
 
   a.ondragstart = e => {
     e.stopPropagation();
@@ -390,7 +454,6 @@ function moveBookmark(srcFolderId, srcId, dstFolderId, dstId) {
   save(); render();
 }
 
-// ====== Folder actions ======
 function toggleFolder(id) {
   const f = state.folders.find(x => x.id === id);
   if (!f) return;
@@ -399,17 +462,31 @@ function toggleFolder(id) {
 }
 function expandAll(){ state.folders.forEach(f => f.collapsed = false); save(); render(); }
 function collapseAll(){ state.folders.forEach(f => f.collapsed = true); save(); render(); }
+function toggleView(id) {
+  const f = state.folders.find(x => x.id === id);
+  if (!f) return;
+  f.viewMode = f.viewMode === 'list' ? 'grid' : 'list';
+  save(); render();
+}
 
 function openFolderModal(id = null) {
   editingFolderId = id;
-  document.getElementById('folderModalTitle').textContent = id ? '編輯資料夾' : '新增資料夾';
+  document.getElementById('folderModalTitle').textContent = id ? '資料夾設定' : '新增資料夾';
+  document.getElementById('fDeleteBtn').style.display = id ? '' : 'none';
+  
   if (id) {
     const f = state.folders.find(x => x.id === id);
     document.getElementById('fIcon').value = f.icon || '';
     document.getElementById('fName').value = f.name;
+    document.querySelector(`input[name="fViewMode"][value="${f.viewMode || 'grid'}"]`).checked = true;
+    document.getElementById('fCols').value = f.columns || 4;
+    document.getElementById('fRows').value = f.maxRows || 0;
   } else {
     document.getElementById('fIcon').value = '📁';
     document.getElementById('fName').value = '';
+    document.querySelector('input[name="fViewMode"][value="grid"]').checked = true;
+    document.getElementById('fCols').value = 4;
+    document.getElementById('fRows').value = 0;
   }
   document.getElementById('folderModal').classList.add('show');
   setTimeout(() => document.getElementById('fName').focus(), 50);
@@ -419,24 +496,28 @@ function saveFolder() {
   const name = document.getElementById('fName').value.trim();
   if (!name) { toast('請輸入名稱'); return; }
   const icon = document.getElementById('fIcon').value.trim() || '📁';
+  const viewMode = document.querySelector('input[name="fViewMode"]:checked').value;
+  const columns = parseInt(document.getElementById('fCols').value) || 4;
+  const maxRows = parseInt(document.getElementById('fRows').value) || 0;
+
   if (editingFolderId) {
     const f = state.folders.find(x => x.id === editingFolderId);
-    f.name = name; f.icon = icon;
+    f.name = name; f.icon = icon; f.viewMode = viewMode; f.columns = columns; f.maxRows = maxRows;
   } else {
-    state.folders.push({ id: uid(), name, icon, collapsed: false, bookmarks: [] });
+    state.folders.push({ id: uid(), name, icon, collapsed: false, viewMode, columns, maxRows, bookmarks: [] });
   }
   save(); closeModal('folderModal'); render();
   toast(editingFolderId ? '已更新' : '已新增');
 }
 
 function deleteFolder(id) {
+  if (!id) id = editingFolderId;
   const f = state.folders.find(x => x.id === id);
   if (!confirm(`確定刪除資料夾「${f.name}」？\n內含 ${f.bookmarks.length} 個書籤也會一起刪除。`)) return;
   state.folders = state.folders.filter(x => x.id !== id);
-  save(); render(); toast('已刪除');
+  save(); closeModal('folderModal'); render(); toast('已刪除');
 }
 
-// ====== Bookmark actions ======
 function openBookmarkModal(folderId, bookmarkId = null) {
   editingBookmark = bookmarkId ? { folderId, bookmarkId } : { folderId, bookmarkId: null };
   const sel = document.getElementById('bFolder');
@@ -497,7 +578,6 @@ function deleteBookmark(folderId, bookmarkId) {
   save(); closeModal('bookmarkModal'); render(); toast('已刪除');
 }
 
-// ====== Import/Export ======
 function exportJSON() {
   const data = JSON.stringify(state, null, 2);
   const blob = new Blob([data], { type: 'application/json' });
@@ -552,7 +632,7 @@ function parseBrowserBookmarks(html) {
         bms.push({ id: uid(), title: a.textContent.trim(), url: a.getAttribute('HREF') || '', note: '' });
       });
       if (bms.length) {
-        folders.push({ id: uid(), name: h3.textContent.trim(), icon: '📁', collapsed: false, bookmarks: bms });
+        folders.push({ id: uid(), name: h3.textContent.trim(), icon: '📁', collapsed: false, viewMode: 'grid', columns: 4, maxRows: 0, bookmarks: bms });
       }
     });
     if (folders.length === 0) { toast('沒有找到書籤資料夾'); return; }
@@ -563,7 +643,6 @@ function parseBrowserBookmarks(html) {
   } catch(e) { toast('解析失敗：' + e.message); }
 }
 
-// ====== Utilities ======
 function closeModal(id){ document.getElementById(id).classList.remove('show'); }
 function escape(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
 function toast(msg){
@@ -573,7 +652,6 @@ function toast(msg){
   toast._t = setTimeout(() => t.classList.remove('show'), 1800);
 }
 
-// ====== Init ======
 document.getElementById('search').addEventListener('input', e => {
   searchTerm = e.target.value; render();
 });
