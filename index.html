@@ -99,21 +99,20 @@
 
         /* Main Content */
         .main-content { flex: 1; display: flex; flex-direction: column; padding: 1.5rem; overflow-y: auto; }
-        .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; flex-wrap: wrap; gap: 0.5rem; }
         .bookmark-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
             gap: 1rem; flex: 1; align-content: start;
         }
         .bookmark-card {
             background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;
-            padding: 1rem; text-align: center; cursor: grab; transition: all 0.2s;
+            padding: 1rem; text-align: center; cursor: pointer; transition: all 0.2s;
             display: flex; flex-direction: column; justify-content: center; align-items: center;
             min-height: 100px; position: relative;
         }
         .bookmark-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px var(--shadow); }
         .bookmark-card.dragging { opacity: 0.5; cursor: grabbing; }
-        .bookmark-card .title { font-weight: 600; margin-bottom: 0.5rem; word-break: break-word; }
-        .bookmark-card .url { font-size: 0.75rem; color: var(--text-secondary); word-break: break-all; }
+        .bookmark-card .title { font-weight: 600; word-break: break-word; }
         .bookmark-card .actions {
             position: absolute; top: 5px; right: 5px; display: none; gap: 4px;
         }
@@ -177,7 +176,9 @@
     <main class="main-content">
         <div class="main-header">
             <h2 id="current-folder-title">All Bookmarks</h2>
-            <div style="display: flex; gap: 0.5rem;">
+            <div style="display: flex; gap: 0.5rem; flex-wrap: wrap;">
+                <button id="btn-import" class="btn-sm">Import</button>
+                <button id="btn-export" class="btn-sm">Export</button>
                 <button id="btn-share-qr">Share QR</button>
                 <button id="btn-add-bookmark">+ Bookmark</button>
             </div>
@@ -314,14 +315,51 @@
             }
         }
 
-        // 7. DRAG & DROP CONTROLLER
+        // 7. DATA SERVICE (Handles Import/Export)
+        class DataService {
+            /** @param {StateManager} store @param {EventBus} bus */
+            constructor(store, bus) {
+                this.store = store;
+                this.bus = bus;
+            }
+            exportData() {
+                const state = this.store.getState();
+                const data = { folders: state.folders, bookmarks: state.bookmarks };
+                const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'harness_bookmarks_export.json';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            }
+            importData(file) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    try {
+                        const data = JSON.parse(e.target.result);
+                        if (data.folders && data.bookmarks) {
+                            this.bus.emit('data:import', data);
+                        } else {
+                            alert('Invalid file format. Missing folders or bookmarks.');
+                        }
+                    } catch (err) {
+                        alert('Error parsing JSON file.');
+                    }
+                };
+                reader.readAsText(file);
+            }
+        }
+
+        // 8. DRAG & DROP CONTROLLER
         class DragDropController {
             /** @param {StateManager} store @param {EventBus} bus */
             constructor(store, bus) {
                 this.store = store;
                 this.bus = bus;
                 this.draggedItem = null;
-                this.draggedType = null;
             }
             /** @param {HTMLElement} el @param {string} type @param {string} id */
             makeDraggable(el, type, id) {
@@ -340,14 +378,18 @@
                 el.ondrop = (e) => {
                     e.preventDefault();
                     el.classList.remove('drag-over');
-                    if (this.draggedItem && this.draggedItem.type === 'bookmark') {
-                        this.bus.emit('bookmark:move', { bookmarkId: this.draggedItem.id, targetFolderId });
+                    if (this.draggedItem) {
+                        if (this.draggedItem.type === 'bookmark') {
+                            this.bus.emit('bookmark:move', { bookmarkId: this.draggedItem.id, targetFolderId });
+                        } else if (this.draggedItem.type === 'folder') {
+                            this.bus.emit('folder:reorder', { draggedFolderId: this.draggedItem.id, targetFolderId });
+                        }
                     }
                 };
             }
         }
 
-        // 8. UI RENDERER
+        // 9. UI RENDERER
         class UIRenderer {
             /** 
              * @param {StateManager} store 
@@ -417,15 +459,21 @@
                 bookmarks.forEach(bm => {
                     const el = document.createElement('div');
                     el.className = 'bookmark-card';
+                    // Removed URL display as requested
                     el.innerHTML = `
                         <div class="actions">
                             <button class="btn-icon btn-edit-bm" data-id="${bm.id}">✏️</button>
                             <button class="btn-icon btn-del-bm" data-id="${bm.id}">🗑️</button>
                         </div>
                         <div class="title">${bm.title}</div>
-                        <div class="url">${bm.url}</div>
                     `;
-                    el.ondblclick = () => window.open(bm.url, '_blank');
+                    
+                    // Single click opens URL (ignoring clicks on action buttons)
+                    el.onclick = (e) => {
+                        if (!e.target.closest('.actions')) {
+                            window.open(bm.url, '_blank');
+                        }
+                    };
                     
                     // DnD
                     this.dnd.makeDraggable(el, 'bookmark', bm.id);
@@ -481,7 +529,7 @@
             }
         }
 
-        // 9. MAIN APP CONTROLLER (Orchestrator)
+        // 10. MAIN APP CONTROLLER (Orchestrator)
         class App {
             constructor() {
                 this.bus = new EventBus();
@@ -490,6 +538,7 @@
                 this.dnd = new DragDropController(this.store, this.bus);
                 this.themeEngine = new ThemeEngine(this.store, this.bus);
                 this.qrService = new QRService(this.modal);
+                this.dataService = new DataService(this.store, this.bus);
                 this.ui = new UIRenderer(this.store, this.bus, this.modal, this.dnd);
                 
                 this._bindEvents();
@@ -501,8 +550,21 @@
             _bindUI() {
                 document.getElementById('btn-add-folder').onclick = () => this.ui._showFolderModal();
                 document.getElementById('btn-add-bookmark').onclick = () => this.ui._showBookmarkModal();
+                
+                document.getElementById('btn-export').onclick = () => this.dataService.exportData();
+                document.getElementById('btn-import').onclick = () => {
+                    const input = document.createElement('input');
+                    input.type = 'file';
+                    input.accept = '.json';
+                    input.onchange = (e) => {
+                        if (e.target.files.length > 0) {
+                            this.dataService.importData(e.target.files[0]);
+                        }
+                    };
+                    input.click();
+                };
+
                 document.getElementById('btn-share-qr').onclick = () => {
-                    // Share only the current folder's bookmarks for cleaner QR
                     const state = this.store.getState();
                     const data = {
                         folder: state.folders.find(f => f.id === state.activeFolder),
@@ -540,6 +602,25 @@
                     this.store.update('activeFolder', state.activeFolder);
                 });
 
+                // Folder Reordering Logic
+                this.bus.on('folder:reorder', ({ draggedFolderId, targetFolderId }) => {
+                    if (draggedFolderId === targetFolderId) return;
+                    const state = this.store.getState();
+                    const folders = [...state.folders].sort((a, b) => a.order - b.order);
+                    
+                    const draggedIdx = folders.findIndex(f => f.id === draggedFolderId);
+                    const targetIdx = folders.findIndex(f => f.id === targetFolderId);
+                    
+                    if (draggedIdx === -1 || targetIdx === -1) return;
+                    
+                    const [draggedFolder] = folders.splice(draggedIdx, 1);
+                    folders.splice(targetIdx, 0, draggedFolder);
+                    
+                    // Recalculate order indices
+                    folders.forEach((f, idx) => f.order = idx);
+                    this.store.update('folders', folders);
+                });
+
                 this.bus.on('bookmark:save', ({ id, title, url }) => {
                     const state = this.store.getState();
                     if (id) {
@@ -567,6 +648,24 @@
                         b.id === bookmarkId ? { ...b, folderId: targetFolderId } : b
                     );
                     this.store.update('bookmarks', state.bookmarks);
+                });
+
+                // Data Import Logic
+                this.bus.on('data:import', (data) => {
+                    if(confirm('This will replace your current bookmarks and folders. Continue?')) {
+                        let folders = data.folders;
+                        // Ensure the default folder always exists to prevent app breaking
+                        const hasDefault = folders.some(f => f.id === 'default');
+                        if(!hasDefault) {
+                            folders = [{ id: 'default', name: 'Default', order: 0 }, ...folders];
+                        }
+                        // Recalculate orders just in case the imported file is messy
+                        folders.forEach((f, idx) => f.order = idx);
+                        
+                        this.store.update('folders', folders);
+                        this.store.update('bookmarks', data.bookmarks);
+                        this.store.update('activeFolder', 'default');
+                    }
                 });
             }
         }
