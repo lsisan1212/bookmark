@@ -1,670 +1,578 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="en" data-theme="default">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>我的書籤</title>
-<style>
-  *{box-sizing:border-box;margin:0;padding:0}
-  :root{
-    --bg:#0d1117;--panel:#161b22;--panel-2:#1f262e;--border:#30363d;
-    --text:#e6edf3;--text-dim:#8b949e;--accent:#58a6ff;--accent-2:#a371f7;
-    --danger:#f85149;--success:#3fb950;--warn:#d29922;
-    --radius:10px;
-  }
-  body{
-    font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft JhengHei",sans-serif;
-    background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 60px;
-  }
-  header{
-    position:sticky;top:0;z-index:100;
-    background:rgba(13,17,23,.85);backdrop-filter:blur(10px);
-    border-bottom:1px solid var(--border);padding:14px 24px;
-    display:flex;gap:12px;align-items:center;flex-wrap:wrap;
-  }
-  header h1{
-    font-size:20px;font-weight:700;
-    background:linear-gradient(90deg,var(--accent),var(--accent-2));
-    -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
-    margin-right:auto;
-  }
-  .btn{
-    background:var(--panel-2);color:var(--text);border:1px solid var(--border);
-    padding:8px 14px;border-radius:var(--radius);cursor:pointer;font-size:13px;
-    transition:all .15s;display:inline-flex;align-items:center;gap:6px;white-space:nowrap;
-  }
-  .btn:hover{background:var(--border);border-color:var(--accent)}
-  .btn.primary{background:linear-gradient(135deg,var(--accent),var(--accent-2));border:none;color:#fff}
-  .btn.primary:hover{opacity:.9}
-  .btn.danger:hover{background:var(--danger);border-color:var(--danger);color:#fff}
-  .search{
-    background:var(--panel-2);border:1px solid var(--border);color:var(--text);
-    padding:8px 12px;border-radius:var(--radius);width:220px;font-size:13px;
-  }
-  .search:focus{outline:none;border-color:var(--accent)}
-  main{max-width:1400px;margin:24px auto;padding:0 24px}
-  
-  /* Folder Styles */
-  .folder{
-    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    margin-bottom:16px;overflow:hidden;transition:all .2s;
-  }
-  .folder.drag-over{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent)}
-  .folder-head{
-    padding:12px 16px;display:flex;align-items:center;gap:10px;cursor:pointer;
-    user-select:none;background:var(--panel-2);border-bottom:1px solid var(--border);
-  }
-  .folder.collapsed .folder-head{border-bottom:none}
-  .folder-head:hover{background:var(--border)}
-  .chevron{transition:transform .2s;color:var(--text-dim);font-size:12px;flex-shrink:0;}
-  .folder.collapsed .chevron{transform:rotate(-90deg)}
-  .folder-icon{font-size:18px;flex-shrink:0}
-  .folder-name{font-weight:600;font-size:15px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-  .folder-count{font-size:11px;color:var(--text-dim);background:var(--bg);padding:2px 8px;border-radius:10px;}
-  .folder-actions{display:flex;gap:4px;opacity:0;transition:opacity .15s}
-  .folder-head:hover .folder-actions{opacity:1}
-  .icon-btn{
-    background:transparent;border:none;color:var(--text-dim);cursor:pointer;
-    padding:4px 6px;border-radius:4px;font-size:14px;
-  }
-  .icon-btn:hover{background:var(--bg);color:var(--text)}
-  .icon-btn.del:hover{color:var(--danger)}
-  
-  /* Folder Body & Grid/List System */
-  .folder-body{
-    padding:16px;
-    display:grid;
-    gap:12px;
-    grid-template-columns: repeat(var(--cols, 4), minmax(0, 1fr));
-    max-height: var(--max-h, none);
-    overflow-y: auto;
-    transition:max-height .3s ease,padding .3s ease,opacity .2s;
-  }
-  .folder.collapsed .folder-body{max-height:0 !important;padding:0 16px;opacity:0;pointer-events:none;overflow:hidden}
-  
-  /* Custom Scrollbar */
-  .folder-body::-webkit-scrollbar{width:8px;height:8px}
-  .folder-body::-webkit-scrollbar-track{background:transparent}
-  .folder-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:4px}
-  .folder-body::-webkit-scrollbar-thumb:hover{background:var(--text-dim)}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Harness Bookmark Manager</title>
+    <!-- External QR Library for zero-install simplicity -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+    <style>
+        /* ==========================================
+           THEME ENGINE (10 Themes via CSS Variables)
+           ========================================== */
+        :root, [data-theme="default"] {
+            --bg-primary: #ffffff; --bg-secondary: #f3f4f6; --bg-tertiary: #e5e7eb;
+            --text-primary: #111827; --text-secondary: #4b5563;
+            --accent: #3b82f6; --accent-hover: #2563eb; --danger: #ef4444;
+            --border: #d1d5db; --shadow: rgba(0,0,0,0.1);
+        }
+        [data-theme="dark"] {
+            --bg-primary: #1f2937; --bg-secondary: #111827; --bg-tertiary: #374151;
+            --text-primary: #f9fafb; --text-secondary: #d1d5db;
+            --accent: #60a5fa; --accent-hover: #3b82f6; --danger: #f87171;
+            --border: #4b5563; --shadow: rgba(0,0,0,0.5);
+        }
+        [data-theme="ocean"] {
+            --bg-primary: #e0f2fe; --bg-secondary: #bae6fd; --bg-tertiary: #7dd3fc;
+            --text-primary: #0c4a6e; --text-secondary: #075985;
+            --accent: #0284c7; --accent-hover: #0369a1; --danger: #be123c;
+            --border: #38bdf8; --shadow: rgba(14,165,233,0.2);
+        }
+        [data-theme="forest"] {
+            --bg-primary: #dcfce7; --bg-secondary: #bbf7d0; --bg-tertiary: #86efac;
+            --text-primary: #14532d; --text-secondary: #166534;
+            --accent: #16a34a; --accent-hover: #15803d; --danger: #dc2626;
+            --border: #4ade80; --shadow: rgba(34,197,94,0.2);
+        }
+        [data-theme="sunset"] {
+            --bg-primary: #fff7ed; --bg-secondary: #ffedd5; --bg-tertiary: #fed7aa;
+            --text-primary: #7c2d12; --text-secondary: #9a3412;
+            --accent: #ea580c; --accent-hover: #c2410c; --danger: #b91c1c;
+            --border: #fb923c; --shadow: rgba(249,115,22,0.2);
+        }
+        [data-theme="cyberpunk"] {
+            --bg-primary: #0f0f1a; --bg-secondary: #1a1a2e; --bg-tertiary: #16213e;
+            --text-primary: #e0e0e0; --text-secondary: #a0a0a0;
+            --accent: #00ffcc; --accent-hover: #00b38f; --danger: #ff0055;
+            --border: #00ffcc; --shadow: rgba(0,255,204,0.3);
+        }
+        [data-theme="minimal"] {
+            --bg-primary: #fafafa; --bg-secondary: #ffffff; --bg-tertiary: #f5f5f5;
+            --text-primary: #000000; --text-secondary: #525252;
+            --accent: #000000; --accent-hover: #404040; --danger: #737373;
+            --border: #e5e5e5; --shadow: rgba(0,0,0,0.05);
+        }
+        [data-theme="rose"] {
+            --bg-primary: #fff1f2; --bg-secondary: #ffe4e6; --bg-tertiary: #fecdd3;
+            --text-primary: #881337; --text-secondary: #9f1239;
+            --accent: #e11d48; --accent-hover: #be123c; --danger: #9f1239;
+            --border: #fb7185; --shadow: rgba(225,29,72,0.2);
+        }
+        [data-theme="monochrome"] {
+            --bg-primary: #f5f5f5; --bg-secondary: #e5e5e5; --bg-tertiary: #d4d4d4;
+            --text-primary: #171717; --text-secondary: #404040;
+            --accent: #525252; --accent-hover: #262626; --danger: #171717;
+            --border: #a3a3a3; --shadow: rgba(0,0,0,0.1);
+        }
+        [data-theme="high-contrast"] {
+            --bg-primary: #000000; --bg-secondary: #1a1a1a; --bg-tertiary: #333333;
+            --text-primary: #ffffff; --text-secondary: #e5e5e5;
+            --accent: #ffff00; --accent-hover: #cccc00; --danger: #ff0000;
+            --border: #ffffff; --shadow: rgba(255,255,255,0.2);
+        }
 
-  /* List View Overrides */
-  .folder-body.list-view{
-    display:flex;
-    flex-direction:column;
-    gap:4px;
-    padding:8px;
-  }
-  .folder-body.list-view .bookmark{
-    flex-direction:row;
-    align-items:center;
-    min-height:40px;
-    padding:8px 12px;
-    gap:12px;
-  }
-  .folder-body.list-view .bm-top{flex:1;min-width:0;}
-  .folder-body.list-view .bm-title{-webkit-line-clamp:1;white-space:nowrap;}
-  .folder-body.list-view .bm-url{flex:0 0 250px;max-width:30%;font-size:12px;}
-  .folder-body.list-view .bm-note{display:none;}
-  .folder-body.list-view .bm-actions{position:static;opacity:0;background:transparent;padding:0;}
-  .folder-body.list-view .bookmark:hover .bm-actions{opacity:1;}
+        /* ==========================================
+           GLOBAL STYLES & LAYOUT
+           ========================================== */
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            background: var(--bg-primary); color: var(--text-primary);
+            display: flex; height: 100vh; overflow: hidden;
+            transition: background 0.3s, color 0.3s;
+        }
 
-  /* Bookmark Card */
-  .bookmark{
-    background:var(--panel-2);border:1px solid var(--border);border-radius:var(--radius);
-    padding:12px;display:flex;flex-direction:column;gap:8px;cursor:pointer;
-    text-decoration:none;color:var(--text);transition:all .15s;position:relative;
-    min-height:100px;
-  }
-  .bookmark:hover{border-color:var(--accent);transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.3)}
-  .folder-body.list-view .bookmark:hover{transform:none;box-shadow:none;background:var(--border)}
-  .bookmark.dragging{opacity:.4}
-  .bookmark.drag-over{border-color:var(--accent);border-style:dashed}
-  .bm-top{display:flex;gap:8px;align-items:flex-start}
-  .bm-fav{
-    width:24px;height:24px;border-radius:4px;background:var(--bg);flex-shrink:0;
-    display:flex;align-items:center;justify-content:center;font-size:12px;overflow:hidden;
-  }
-  .bm-fav img{width:100%;height:100%;object-fit:contain}
-  .bm-title{
-    font-size:13px;font-weight:600;line-height:1.3;
-    display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
-    overflow:hidden;flex:1;word-break:break-word;
-  }
-  .bm-url{font-size:11px;color:var(--text-dim);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
-  .bm-note{font-size:11px;color:var(--text-dim);line-height:1.4;margin-top:2px}
-  .bm-actions{
-    position:absolute;top:6px;right:6px;display:flex;gap:2px;
-    opacity:0;transition:opacity .15s;background:var(--panel);border-radius:6px;padding:2px;
-  }
-  .bookmark:hover .bm-actions{opacity:1}
-  
-  .empty-state{grid-column:1/-1;text-align:center;padding:40px;color:var(--text-dim);border:2px dashed var(--border);border-radius:var(--radius);}
-  .add-bookmark{
-    border:2px dashed var(--border);background:transparent;color:var(--text-dim);
-    display:flex;align-items:center;justify-content:center;gap:8px;font-size:13px;min-height:100px;
-  }
-  .folder-body.list-view .add-bookmark{min-height:40px;border:1px dashed var(--border);border-radius:6px;}
-  .add-bookmark:hover{border-color:var(--accent);color:var(--accent);background:transparent;transform:none}
-  
-  /* Modal */
-  .modal-bg{
-    position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:200;
-    display:none;align-items:center;justify-content:center;padding:20px;backdrop-filter:blur(4px);
-  }
-  .modal-bg.show{display:flex}
-  .modal{
-    background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);
-    width:100%;max-width:480px;padding:24px;max-height:90vh;overflow-y:auto;
-  }
-  .modal h2{margin-bottom:16px;font-size:18px}
-  .field{margin-bottom:14px}
-  .field label{display:block;font-size:12px;color:var(--text-dim);margin-bottom:6px}
-  .field input,.field textarea,.field select{
-    width:100%;background:var(--bg);border:1px solid var(--border);color:var(--text);
-    padding:10px;border-radius:6px;font-size:13px;font-family:inherit;
-  }
-  .field input:focus,.field textarea:focus,.field select:focus{outline:none;border-color:var(--accent)}
-  .field textarea{resize:vertical;min-height:60px}
-  .radio-group{display:flex;gap:16px;margin-top:4px;}
-  .radio-group label{display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--text);font-size:13px;}
-  .modal-actions{display:flex;gap:8px;justify-content:flex-end;margin-top:20px}
-  
-  .toast{
-    position:fixed;bottom:24px;left:50%;transform:translateX(-50%);
-    background:var(--panel-2);border:1px solid var(--border);padding:12px 20px;
-    border-radius:var(--radius);font-size:13px;z-index:300;
-    box-shadow:0 8px 24px rgba(0,0,0,.4);opacity:0;transition:opacity .2s;
-  }
-  .toast.show{opacity:1}
-  .empty-all{text-align:center;padding:80px 20px;color:var(--text-dim);}
-  .empty-all h2{color:var(--text);margin-bottom:12px}
-  
-  @media (max-width:640px){
-    header{padding:10px 12px}
-    .search{width:100%;order:10}
-    main{padding:0 12px}
-    .folder-body{--cols: 2 !important;}
-    .folder-actions{opacity:1}
-    .folder-body.list-view .bm-url{flex:0 0 120px;max-width:40%;}
-  }
-</style>
+        /* Sidebar */
+        .sidebar {
+            width: 250px; background: var(--bg-secondary); border-right: 1px solid var(--border);
+            display: flex; flex-direction: column; padding: 1rem;
+        }
+        .sidebar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+        .folder-list { flex: 1; overflow-y: auto; }
+        .folder-item {
+            padding: 0.6rem 0.8rem; margin-bottom: 0.4rem; border-radius: 6px;
+            cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+            background: var(--bg-tertiary); transition: all 0.2s;
+        }
+        .folder-item.active, .folder-item:hover { background: var(--accent); color: white; }
+        .folder-item.drag-over { border: 2px dashed var(--accent); }
+
+        /* Main Content */
+        .main-content { flex: 1; display: flex; flex-direction: column; padding: 1.5rem; overflow-y: auto; }
+        .main-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+        .bookmark-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+            gap: 1rem; flex: 1; align-content: start;
+        }
+        .bookmark-card {
+            background: var(--bg-secondary); border: 1px solid var(--border); border-radius: 8px;
+            padding: 1rem; text-align: center; cursor: grab; transition: all 0.2s;
+            display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 100px; position: relative;
+        }
+        .bookmark-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px var(--shadow); }
+        .bookmark-card.dragging { opacity: 0.5; cursor: grabbing; }
+        .bookmark-card .title { font-weight: 600; margin-bottom: 0.5rem; word-break: break-word; }
+        .bookmark-card .url { font-size: 0.75rem; color: var(--text-secondary); word-break: break-all; }
+        .bookmark-card .actions {
+            position: absolute; top: 5px; right: 5px; display: none; gap: 4px;
+        }
+        .bookmark-card:hover .actions { display: flex; }
+
+        /* Buttons & Inputs */
+        button, .btn {
+            padding: 0.5rem 1rem; border: none; border-radius: 6px; cursor: pointer;
+            font-weight: 500; transition: all 0.2s; background: var(--accent); color: white;
+        }
+        button:hover { background: var(--accent-hover); }
+        .btn-danger { background: var(--danger); }
+        .btn-sm { padding: 0.25rem 0.5rem; font-size: 0.75rem; }
+        .btn-icon { background: transparent; color: var(--text-secondary); padding: 0.2rem; }
+        .btn-icon:hover { color: var(--danger); background: transparent; }
+        
+        input, select {
+            padding: 0.5rem; border: 1px solid var(--border); border-radius: 6px;
+            background: var(--bg-primary); color: var(--text-primary); width: 100%; margin-bottom: 1rem;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.5); display: none; justify-content: center; align-items: center;
+            z-index: 100;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--bg-primary); padding: 2rem; border-radius: 12px;
+            width: 100%; max-width: 400px; box-shadow: 0 10px 25px var(--shadow);
+        }
+        .modal h3 { margin-bottom: 1rem; }
+        .modal-actions { display: flex; gap: 0.5rem; justify-content: flex-end; }
+
+        /* Theme Switcher */
+        .theme-switcher { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border); }
+        .theme-dot {
+            width: 24px; height: 24px; border-radius: 50%; cursor: pointer; border: 2px solid var(--border);
+        }
+
+        /* QR Code */
+        #qrcode-display { display: flex; justify-content: center; margin: 1rem 0; }
+    </style>
 </head>
 <body>
 
-<header>
-  <h1>📚 我的書籤</h1>
-  <input class="search" id="search" placeholder="🔍 搜尋書籤..." />
-  <button class="btn primary" onclick="openFolderModal()">＋ 新資料夾</button>
-  <button class="btn" onclick="expandAll()">全部展開</button>
-  <button class="btn" onclick="collapseAll()">全部折疊</button>
-  <button class="btn" onclick="importBrowser()">📥 匯入瀏覽器書籤</button>
-  <button class="btn" onclick="exportJSON()">💾 匯出</button>
-  <button class="btn" onclick="importJSON()">📂 匯入</button>
-  <input type="file" id="fileInput" accept=".html,.json" hidden />
-</header>
-
-<main id="main"></main>
-
-<!-- Folder Modal -->
-<div class="modal-bg" id="folderModal">
-  <div class="modal">
-    <h2 id="folderModalTitle">新增資料夾</h2>
-    <div class="field">
-      <label>圖示（Emoji）</label>
-      <input id="fIcon" maxlength="4" placeholder="📁" />
-    </div>
-    <div class="field">
-      <label>名稱</label>
-      <input id="fName" placeholder="例如：工作、學習、娛樂" />
-    </div>
-    <hr style="border-color:var(--border);margin:16px 0;">
-    <div class="field">
-      <label>顯示模式</label>
-      <div class="radio-group">
-        <label><input type="radio" name="fViewMode" value="grid" checked /> 📊 網格 (Grid)</label>
-        <label><input type="radio" name="fViewMode" value="list" /> 📋 列表 (List)</label>
-      </div>
-    </div>
-    <div class="field">
-      <label>欄數 (Columns，僅網格模式生效，1~10)</label>
-      <input type="number" id="fCols" min="1" max="10" value="4" />
-    </div>
-    <div class="field">
-      <label>最大列數 (Max Rows，0 = 不限制，超過會顯示捲軸)</label>
-      <input type="number" id="fRows" min="0" max="20" value="0" />
-    </div>
-    <div class="modal-actions">
-      <button class="btn danger" id="fDeleteBtn" onclick="deleteFolder()" style="margin-right:auto;display:none">刪除資料夾</button>
-      <button class="btn" onclick="closeModal('folderModal')">取消</button>
-      <button class="btn primary" onclick="saveFolder()">儲存</button>
-    </div>
-  </div>
-</div>
-
-<!-- Bookmark Modal -->
-<div class="modal-bg" id="bookmarkModal">
-  <div class="modal">
-    <h2 id="bookmarkModalTitle">新增書籤</h2>
-    <div class="field">
-      <label>標題</label>
-      <input id="bTitle" placeholder="網站名稱" />
-    </div>
-    <div class="field">
-      <label>網址</label>
-      <input id="bUrl" placeholder="https://" />
-    </div>
-    <div class="field">
-      <label>備註（選填）</label>
-      <textarea id="bNote" placeholder="簡短說明這個書籤的用途..."></textarea>
-    </div>
-    <div class="field">
-      <label>所屬資料夾</label>
-      <select id="bFolder"></select>
-    </div>
-    <div class="modal-actions">
-      <button class="btn danger" id="bDeleteBtn" onclick="deleteBookmark()" style="margin-right:auto;display:none">刪除</button>
-      <button class="btn" onclick="closeModal('bookmarkModal')">取消</button>
-      <button class="btn primary" onclick="saveBookmark()">儲存</button>
-    </div>
-  </div>
-</div>
-
-<div class="toast" id="toast"></div>
-
-<script>
-const STORAGE_KEY = 'bm_data_v1';
-let state = { folders: [] };
-let editingFolderId = null;
-let editingBookmark = null; 
-let searchTerm = '';
-
-function save() { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); }
-function load() {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (raw) {
-      state = JSON.parse(raw);
-      // Migration for older data
-      state.folders.forEach(f => {
-        f.viewMode = f.viewMode || 'grid';
-        f.columns = f.columns || 4;
-        f.maxRows = f.maxRows || 0;
-      });
-    } else seedDemo();
-  } catch(e) { seedDemo(); }
-}
-function seedDemo(){
-  state = { folders: [
-    { id: uid(), name: '常用', icon: '⭐', collapsed: false, viewMode: 'grid', columns: 5, maxRows: 0, bookmarks: [
-      { id: uid(), title: 'Google', url: 'https://google.com', note: '' },
-      { id: uid(), title: 'GitHub', url: 'https://github.com', note: '程式碼倉庫' },
-      { id: uid(), title: 'YouTube', url: 'https://youtube.com', note: '' },
-    ]},
-    { id: uid(), name: '工作 (List 模式)', icon: '💼', collapsed: false, viewMode: 'list', columns: 1, maxRows: 5, bookmarks: [
-      { id: uid(), title: 'Gmail', url: 'https://mail.google.com', note: '' },
-      { id: uid(), title: 'Notion', url: 'https://notion.so', note: '' },
-      { id: uid(), title: 'Trello', url: 'https://trello.com', note: '' },
-    ]},
-    { id: uid(), name: '學習 (限制 2 列)', icon: '📖', collapsed: false, viewMode: 'grid', columns: 4, maxRows: 2, bookmarks: [
-      { id: uid(), title: 'MDN', url: 'https://developer.mozilla.org', note: '' },
-      { id: uid(), title: 'StackOverflow', url: 'https://stackoverflow.com', note: '' },
-      { id: uid(), title: 'CSS-Tricks', url: 'https://css-tricks.com', note: '' },
-      { id: uid(), title: 'DevDocs', url: 'https://devdocs.io', note: '' },
-      { id: uid(), title: 'Coursera', url: 'https://coursera.org', note: '' },
-    ]},
-  ]};
-  save();
-}
-function uid(){ return Math.random().toString(36).slice(2,10); }
-
-function render() {
-  const main = document.getElementById('main');
-  main.innerHTML = '';
-  const q = searchTerm.toLowerCase().trim();
-
-  if (state.folders.length === 0) {
-    main.innerHTML = `<div class="empty-all"><h2>📚 還沒有任何書籤</h2><p>點上方的「＋ 新資料夾」開始，或匯入你的瀏覽器書籤</p></div>`;
-    return;
-  }
-
-  state.folders.forEach(folder => {
-    let bms = folder.bookmarks;
-    if (q) bms = bms.filter(b => b.title.toLowerCase().includes(q) || b.url.toLowerCase().includes(q) || (b.note||'').toLowerCase().includes(q));
-    if (q && bms.length === 0 && !folder.name.toLowerCase().includes(q)) return;
-
-    const el = document.createElement('div');
-    el.className = 'folder' + (folder.collapsed ? ' collapsed' : '');
-    el.dataset.folderId = folder.id;
-    el.draggable = true;
-    el.ondragstart = e => { e.dataTransfer.setData('type','folder'); e.dataTransfer.setData('id', folder.id); el.style.opacity='.4'; };
-    el.ondragend = () => el.style.opacity='1';
-    el.ondragover = e => { if (e.dataTransfer.types.includes('type')) { e.preventDefault(); el.classList.add('drag-over'); }};
-    el.ondragleave = () => el.classList.remove('drag-over');
-    el.ondrop = e => {
-      e.preventDefault(); el.classList.remove('drag-over');
-      const type = e.dataTransfer.getData('type');
-      const id = e.dataTransfer.getData('id');
-      if (type === 'folder' && id !== folder.id) {
-        const fromIdx = state.folders.findIndex(f => f.id === id);
-        const toIdx = state.folders.findIndex(f => f.id === folder.id);
-        const [moved] = state.folders.splice(fromIdx, 1);
-        state.folders.splice(toIdx, 0, moved);
-        save(); render();
-      }
-    };
-
-    const isList = folder.viewMode === 'list';
-    const cols = folder.columns || 4;
-    const maxRows = folder.maxRows || 0;
-    let maxHeight = 'none';
-    if (maxRows > 0) {
-      const rowH = isList ? 44 : 112; // Approximate height + gap
-      maxHeight = (maxRows * rowH) + 'px';
-    }
-
-    el.innerHTML = `
-      <div class="folder-head" onclick="toggleFolder('${folder.id}')">
-        <span class="chevron">▼</span>
-        <span class="folder-icon">${folder.icon || '📁'}</span>
-        <span class="folder-name">${escape(folder.name)}</span>
-        <span class="folder-count">${folder.bookmarks.length}</span>
-        <div class="folder-actions" onclick="event.stopPropagation()">
-          <button class="icon-btn" onclick="toggleView('${folder.id}')" title="切換視圖">${isList ? '📊' : '📋'}</button>
-          <button class="icon-btn" onclick="openFolderModal('${folder.id}')" title="設定">⚙️</button>
-          <button class="icon-btn" onclick="openBookmarkModal('${folder.id}')" title="新增書籤">＋</button>
-          <button class="icon-btn del" onclick="deleteFolder('${folder.id}')" title="刪除">🗑️</button>
+    <!-- Sidebar -->
+    <aside class="sidebar">
+        <div class="sidebar-header">
+            <h2>Folders</h2>
+            <button id="btn-add-folder" class="btn-sm">+ New</button>
         </div>
-      </div>
-      <div class="folder-body ${isList ? 'list-view' : ''}" style="--cols:${cols}; --max-h:${maxHeight};"></div>
-    `;
-    const body = el.querySelector('.folder-body');
-    bms.forEach(bm => body.appendChild(renderBookmark(folder.id, bm)));
-    
-    const addBtn = document.createElement('button');
-    addBtn.className = 'bookmark add-bookmark';
-    addBtn.innerHTML = '＋ 新增書籤';
-    addBtn.onclick = () => openBookmarkModal(folder.id);
-    body.appendChild(addBtn);
-    main.appendChild(el);
-  });
-}
+        <div id="folder-list" class="folder-list"></div>
+        
+        <!-- Theme Switcher integrated in Sidebar -->
+        <div class="theme-switcher" id="theme-switcher"></div>
+    </aside>
 
-function renderBookmark(folderId, bm) {
-  const a = document.createElement('a');
-  a.className = 'bookmark';
-  a.href = bm.url;
-  a.target = '_blank';
-  a.rel = 'noopener';
-  a.dataset.bmId = bm.id;
-  a.dataset.folderId = folderId;
-  a.draggable = true;
-  a.onclick = e => { if (e.detail === 2) { e.preventDefault(); openBookmarkModal(folderId, bm.id); }};
+    <!-- Main Content -->
+    <main class="main-content">
+        <div class="main-header">
+            <h2 id="current-folder-title">All Bookmarks</h2>
+            <div style="display: flex; gap: 0.5rem;">
+                <button id="btn-share-qr">Share QR</button>
+                <button id="btn-add-bookmark">+ Bookmark</button>
+            </div>
+        </div>
+        <div id="bookmark-grid" class="bookmark-grid"></div>
+    </main>
 
-  a.ondragstart = e => {
-    e.stopPropagation();
-    e.dataTransfer.setData('type','bookmark');
-    e.dataTransfer.setData('id', bm.id);
-    e.dataTransfer.setData('folderId', folderId);
-    a.classList.add('dragging');
-  };
-  a.ondragend = () => a.classList.remove('dragging');
-  a.ondragover = e => { e.preventDefault(); e.stopPropagation(); a.classList.add('drag-over'); };
-  a.ondragleave = () => a.classList.remove('drag-over');
-  a.ondrop = e => {
-    e.preventDefault(); e.stopPropagation();
-    a.classList.remove('drag-over');
-    const type = e.dataTransfer.getData('type');
-    if (type !== 'bookmark') return;
-    const srcId = e.dataTransfer.getData('id');
-    const srcFolderId = e.dataTransfer.getData('folderId');
-    moveBookmark(srcFolderId, srcId, folderId, bm.id);
-  };
-
-  let host = '';
-  try { host = new URL(bm.url).hostname.replace('www.',''); } catch {}
-  const fav = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(host||'example.com')}&sz=64`;
-
-  a.innerHTML = `
-    <div class="bm-actions">
-      <button class="icon-btn" onclick="event.preventDefault();event.stopPropagation();openBookmarkModal('${folderId}','${bm.id}')" title="編輯">✏️</button>
-      <button class="icon-btn del" onclick="event.preventDefault();event.stopPropagation();deleteBookmark('${folderId}','${bm.id}')" title="刪除">🗑️</button>
+    <!-- Modals -->
+    <div id="modal-overlay" class="modal-overlay">
+        <div class="modal" id="modal-content"></div>
     </div>
-    <div class="bm-top">
-      <div class="bm-fav"><img src="${fav}" onerror="this.replaceWith(document.createTextNode('🔗'))" /></div>
-      <div class="bm-title">${escape(bm.title)}</div>
-    </div>
-    <div class="bm-url">${escape(host)}</div>
-    ${bm.note ? `<div class="bm-note">${escape(bm.note)}</div>` : ''}
-  `;
-  return a;
-}
 
-function moveBookmark(srcFolderId, srcId, dstFolderId, dstId) {
-  const sf = state.folders.find(f => f.id === srcFolderId);
-  const df = state.folders.find(f => f.id === dstFolderId);
-  if (!sf || !df) return;
-  const srcIdx = sf.bookmarks.findIndex(b => b.id === srcId);
-  if (srcIdx < 0) return;
-  const [bm] = sf.bookmarks.splice(srcIdx, 1);
-  let dstIdx = df.bookmarks.findIndex(b => b.id === dstId);
-  if (dstIdx < 0) dstIdx = df.bookmarks.length;
-  if (sf === df && srcIdx < dstIdx) dstIdx--;
-  df.bookmarks.splice(dstIdx, 0, bm);
-  save(); render();
-}
+    <script>
+        /**
+         * ==========================================
+         * HARNESS ENGINEERING ARCHITECTURE
+         * Strict MVC, Event-Driven, Highly Modular
+         * ==========================================
+         */
 
-function toggleFolder(id) {
-  const f = state.folders.find(x => x.id === id);
-  if (!f) return;
-  f.collapsed = !f.collapsed;
-  save(); render();
-}
-function expandAll(){ state.folders.forEach(f => f.collapsed = false); save(); render(); }
-function collapseAll(){ state.folders.forEach(f => f.collapsed = true); save(); render(); }
-function toggleView(id) {
-  const f = state.folders.find(x => x.id === id);
-  if (!f) return;
-  f.viewMode = f.viewMode === 'list' ? 'grid' : 'list';
-  save(); render();
-}
+        // 1. EVENT BUS (Pub/Sub for decoupling)
+        class EventBus {
+            constructor() { this.events = {}; }
+            /** @param {string} event @param {Function} callback */
+            on(event, callback) {
+                if (!this.events[event]) this.events[event] = [];
+                this.events[event].push(callback);
+            }
+            /** @param {string} event @param {any} data */
+            emit(event, data) {
+                if (this.events[event]) this.events[event].forEach(cb => cb(data));
+            }
+        }
 
-function openFolderModal(id = null) {
-  editingFolderId = id;
-  document.getElementById('folderModalTitle').textContent = id ? '資料夾設定' : '新增資料夾';
-  document.getElementById('fDeleteBtn').style.display = id ? '' : 'none';
-  
-  if (id) {
-    const f = state.folders.find(x => x.id === id);
-    document.getElementById('fIcon').value = f.icon || '';
-    document.getElementById('fName').value = f.name;
-    document.querySelector(`input[name="fViewMode"][value="${f.viewMode || 'grid'}"]`).checked = true;
-    document.getElementById('fCols').value = f.columns || 4;
-    document.getElementById('fRows').value = f.maxRows || 0;
-  } else {
-    document.getElementById('fIcon').value = '📁';
-    document.getElementById('fName').value = '';
-    document.querySelector('input[name="fViewMode"][value="grid"]').checked = true;
-    document.getElementById('fCols').value = 4;
-    document.getElementById('fRows').value = 0;
-  }
-  document.getElementById('folderModal').classList.add('show');
-  setTimeout(() => document.getElementById('fName').focus(), 50);
-}
+        // 2. STATE MANAGER (Single Source of Truth)
+        class StateManager {
+            /** @param {EventBus} bus */
+            constructor(bus) {
+                this.bus = bus;
+                this.state = this._loadState();
+            }
+            _loadState() {
+                const saved = localStorage.getItem('harness_bookmarks');
+                return saved ? JSON.parse(saved) : {
+                    folders: [{ id: 'default', name: 'Default', order: 0 }],
+                    bookmarks: [],
+                    activeFolder: 'default',
+                    theme: 'default'
+                };
+            }
+            save() { localStorage.setItem('harness_bookmarks', JSON.stringify(this.state)); }
+            getState() { return this.state; }
+            
+            /** @param {string} key @param {any} value */
+            update(key, value) {
+                this.state[key] = value;
+                this.save();
+                this.bus.emit('state:changed', { key, value });
+            }
+        }
 
-function saveFolder() {
-  const name = document.getElementById('fName').value.trim();
-  if (!name) { toast('請輸入名稱'); return; }
-  const icon = document.getElementById('fIcon').value.trim() || '📁';
-  const viewMode = document.querySelector('input[name="fViewMode"]:checked').value;
-  const columns = parseInt(document.getElementById('fCols').value) || 4;
-  const maxRows = parseInt(document.getElementById('fRows').value) || 0;
+        // 3. STORAGE & UTILS
+        class Utils {
+            static generateId() { return Math.random().toString(36).substr(2, 9); }
+        }
 
-  if (editingFolderId) {
-    const f = state.folders.find(x => x.id === editingFolderId);
-    f.name = name; f.icon = icon; f.viewMode = viewMode; f.columns = columns; f.maxRows = maxRows;
-  } else {
-    state.folders.push({ id: uid(), name, icon, collapsed: false, viewMode, columns, maxRows, bookmarks: [] });
-  }
-  save(); closeModal('folderModal'); render();
-  toast(editingFolderId ? '已更新' : '已新增');
-}
+        // 4. THEME ENGINE
+        class ThemeEngine {
+            /** @param {StateManager} store @param {EventBus} bus */
+            constructor(store, bus) {
+                this.store = store;
+                this.bus = bus;
+                this.themes = ['default', 'dark', 'ocean', 'forest', 'sunset', 'cyberpunk', 'minimal', 'rose', 'monochrome', 'high-contrast'];
+                this.themeColors = {
+                    default: '#3b82f6', dark: '#1f2937', ocean: '#0284c7', forest: '#16a34a',
+                    sunset: '#ea580c', cyberpunk: '#00ffcc', minimal: '#000000', rose: '#e11d48',
+                    monochrome: '#525252', 'high-contrast': '#ffff00'
+                };
+            }
+            init() {
+                const container = document.getElementById('theme-switcher');
+                this.themes.forEach(theme => {
+                    const dot = document.createElement('div');
+                    dot.className = 'theme-dot';
+                    dot.style.background = this.themeColors[theme];
+                    dot.title = theme;
+                    dot.onclick = () => this.setTheme(theme);
+                    container.appendChild(dot);
+                });
+                this.setTheme(this.store.getState().theme);
+            }
+            /** @param {string} themeName */
+            setTheme(themeName) {
+                document.documentElement.setAttribute('data-theme', themeName);
+                this.store.update('theme', themeName);
+            }
+        }
 
-function deleteFolder(id) {
-  if (!id) id = editingFolderId;
-  const f = state.folders.find(x => x.id === id);
-  if (!confirm(`確定刪除資料夾「${f.name}」？\n內含 ${f.bookmarks.length} 個書籤也會一起刪除。`)) return;
-  state.folders = state.folders.filter(x => x.id !== id);
-  save(); closeModal('folderModal'); render(); toast('已刪除');
-}
+        // 5. MODAL CONTROLLER
+        class ModalController {
+            constructor() {
+                this.overlay = document.getElementById('modal-overlay');
+                this.content = document.getElementById('modal-content');
+                this.overlay.onclick = (e) => { if (e.target === this.overlay) this.close(); };
+            }
+            /** @param {string} html */
+            open(html) {
+                this.content.innerHTML = html;
+                this.overlay.classList.add('active');
+            }
+            close() { this.overlay.classList.remove('active'); }
+        }
 
-function openBookmarkModal(folderId, bookmarkId = null) {
-  editingBookmark = bookmarkId ? { folderId, bookmarkId } : { folderId, bookmarkId: null };
-  const sel = document.getElementById('bFolder');
-  sel.innerHTML = state.folders.map(f => `<option value="${f.id}">${escape(f.icon||'📁')} ${escape(f.name)}</option>`).join('');
-  sel.value = folderId;
+        // 6. QR SERVICE
+        class QRService {
+            constructor(modal) { this.modal = modal; }
+            /** @param {object} data */
+            show(data) {
+                const jsonStr = JSON.stringify(data);
+                const html = `
+                    <h3>Share Bookmarks</h3>
+                    <p style="margin-bottom:1rem; font-size:0.9rem; color:var(--text-secondary)">Scan to import these bookmarks.</p>
+                    <div id="qrcode-display"></div>
+                    <div class="modal-actions"><button onclick="app.modal.close()">Close</button></div>
+                `;
+                this.modal.open(html);
+                
+                // Clear previous and generate new
+                document.getElementById('qrcode-display').innerHTML = '';
+                new QRCode(document.getElementById("qrcode-display"), {
+                    text: jsonStr, width: 200, height: 200,
+                    colorDark : "#000000", colorLight : "#ffffff", correctLevel : QRCode.CorrectLevel.L
+                });
+            }
+        }
 
-  document.getElementById('bookmarkModalTitle').textContent = bookmarkId ? '編輯書籤' : '新增書籤';
-  document.getElementById('bDeleteBtn').style.display = bookmarkId ? '' : 'none';
+        // 7. DRAG & DROP CONTROLLER
+        class DragDropController {
+            /** @param {StateManager} store @param {EventBus} bus */
+            constructor(store, bus) {
+                this.store = store;
+                this.bus = bus;
+                this.draggedItem = null;
+                this.draggedType = null;
+            }
+            /** @param {HTMLElement} el @param {string} type @param {string} id */
+            makeDraggable(el, type, id) {
+                el.draggable = true;
+                el.ondragstart = (e) => {
+                    this.draggedItem = { type, id };
+                    el.classList.add('dragging');
+                    e.dataTransfer.effectAllowed = 'move';
+                };
+                el.ondragend = () => { el.classList.remove('dragging'); this.draggedItem = null; };
+            }
+            /** @param {HTMLElement} el @param {string} targetFolderId */
+            makeDropTarget(el, targetFolderId) {
+                el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over'); };
+                el.ondragleave = () => el.classList.remove('drag-over');
+                el.ondrop = (e) => {
+                    e.preventDefault();
+                    el.classList.remove('drag-over');
+                    if (this.draggedItem && this.draggedItem.type === 'bookmark') {
+                        this.bus.emit('bookmark:move', { bookmarkId: this.draggedItem.id, targetFolderId });
+                    }
+                };
+            }
+        }
 
-  if (bookmarkId) {
-    const f = state.folders.find(x => x.id === folderId);
-    const b = f.bookmarks.find(x => x.id === bookmarkId);
-    document.getElementById('bTitle').value = b.title;
-    document.getElementById('bUrl').value = b.url;
-    document.getElementById('bNote').value = b.note || '';
-  } else {
-    document.getElementById('bTitle').value = '';
-    document.getElementById('bUrl').value = 'https://';
-    document.getElementById('bNote').value = '';
-  }
-  document.getElementById('bookmarkModal').classList.add('show');
-  setTimeout(() => document.getElementById('bTitle').focus(), 50);
-}
+        // 8. UI RENDERER
+        class UIRenderer {
+            /** 
+             * @param {StateManager} store 
+             * @param {EventBus} bus 
+             * @param {ModalController} modal 
+             * @param {DragDropController} dnd 
+             */
+            constructor(store, bus, modal, dnd) {
+                this.store = store; this.bus = bus; this.modal = modal; this.dnd = dnd;
+                this.folderListEl = document.getElementById('folder-list');
+                this.bookmarkGridEl = document.getElementById('bookmark-grid');
+                this.titleEl = document.getElementById('current-folder-title');
+            }
 
-function saveBookmark() {
-  const title = document.getElementById('bTitle').value.trim();
-  let url = document.getElementById('bUrl').value.trim();
-  const note = document.getElementById('bNote').value.trim();
-  const newFolderId = document.getElementById('bFolder').value;
-  if (!title || !url) { toast('請填寫標題與網址'); return; }
-  if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+            renderAll() {
+                this.renderFolders();
+                this.renderBookmarks();
+            }
 
-  if (editingBookmark.bookmarkId) {
-    const oldFolder = state.folders.find(f => f.id === editingBookmark.folderId);
-    const bm = oldFolder.bookmarks.find(b => b.id === editingBookmark.bookmarkId);
-    bm.title = title; bm.url = url; bm.note = note;
-    if (newFolderId !== editingBookmark.folderId) {
-      oldFolder.bookmarks = oldFolder.bookmarks.filter(b => b.id !== editingBookmark.bookmarkId);
-      const nf = state.folders.find(f => f.id === newFolderId);
-      nf.bookmarks.push(bm);
-    }
-  } else {
-    const f = state.folders.find(x => x.id === newFolderId);
-    f.bookmarks.push({ id: uid(), title, url, note });
-  }
-  save(); closeModal('bookmarkModal'); render();
-  toast(editingBookmark.bookmarkId ? '已更新' : '已新增');
-}
+            renderFolders() {
+                const state = this.store.getState();
+                this.folderListEl.innerHTML = '';
+                
+                const sortedFolders = [...state.folders].sort((a, b) => a.order - b.order);
+                sortedFolders.forEach(folder => {
+                    const el = document.createElement('div');
+                    el.className = `folder-item ${folder.id === state.activeFolder ? 'active' : ''}`;
+                    el.innerHTML = `
+                        <span>${folder.name}</span>
+                        <div style="display:flex; gap:4px;">
+                            <button class="btn-icon btn-edit-folder" data-id="${folder.id}">✏️</button>
+                            ${folder.id !== 'default' ? `<button class="btn-icon btn-del-folder" data-id="${folder.id}">🗑️</button>` : ''}
+                        </div>
+                    `;
+                    el.onclick = (e) => {
+                        if(!e.target.classList.contains('btn-icon')) this.bus.emit('folder:select', folder.id);
+                    };
+                    
+                    // DnD
+                    this.dnd.makeDraggable(el, 'folder', folder.id);
+                    this.dnd.makeDropTarget(el, folder.id);
 
-function deleteBookmark(folderId, bookmarkId) {
-  if (editingBookmark && !bookmarkId) {
-    folderId = editingBookmark.folderId;
-    bookmarkId = editingBookmark.bookmarkId;
-  }
-  if (!confirm('確定刪除此書籤？')) return;
-  const f = state.folders.find(x => x.id === folderId);
-  f.bookmarks = f.bookmarks.filter(b => b.id !== bookmarkId);
-  save(); closeModal('bookmarkModal'); render(); toast('已刪除');
-}
+                    // Actions
+                    el.querySelector('.btn-edit-folder').onclick = (e) => { e.stopPropagation(); this._showFolderModal(folder); };
+                    const delBtn = el.querySelector('.btn-del-folder');
+                    if(delBtn) delBtn.onclick = (e) => { e.stopPropagation(); this.bus.emit('folder:delete', folder.id); };
 
-function exportJSON() {
-  const data = JSON.stringify(state, null, 2);
-  const blob = new Blob([data], { type: 'application/json' });
-  const a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = `bookmarks-${new Date().toISOString().slice(0,10)}.json`;
-  a.click();
-  toast('已匯出');
-}
+                    this.folderListEl.appendChild(el);
+                });
+            }
 
-function importJSON() {
-  const input = document.getElementById('fileInput');
-  input.value = ''; input.accept = '.json,.html';
-  input.onchange = async e => {
-    const file = e.target.files[0]; if (!file) return;
-    const text = await file.text();
-    if (file.name.endsWith('.json')) {
-      try {
-        const data = JSON.parse(text);
-        if (!data.folders) throw new Error('格式錯誤');
-        if (!confirm(`匯入將取代目前 ${state.folders.length} 個資料夾。確定？`)) return;
-        state = data; save(); render(); toast('已匯入 JSON');
-      } catch(err) { toast('JSON 解析失敗：' + err.message); }
-    } else {
-      parseBrowserBookmarks(text);
-    }
-  };
-  input.click();
-}
+            renderBookmarks() {
+                const state = this.store.getState();
+                const activeFolder = state.folders.find(f => f.id === state.activeFolder);
+                this.titleEl.textContent = activeFolder ? activeFolder.name : 'Bookmarks';
+                
+                this.bookmarkGridEl.innerHTML = '';
+                const bookmarks = state.bookmarks
+                    .filter(b => b.folderId === state.activeFolder)
+                    .sort((a, b) => a.order - b.order);
 
-function importBrowser() {
-  const input = document.getElementById('fileInput');
-  input.value = ''; input.accept = '.html';
-  input.onchange = async e => {
-    const file = e.target.files[0]; if (!file) return;
-    const text = await file.text();
-    parseBrowserBookmarks(text);
-  };
-  input.click();
-}
+                if (bookmarks.length === 0) {
+                    this.bookmarkGridEl.innerHTML = '<p style="color:var(--text-secondary); grid-column: 1/-1; text-align:center; margin-top:2rem;">No bookmarks here. Click "+ Bookmark" to add one.</p>';
+                    return;
+                }
 
-function parseBrowserBookmarks(html) {
-  try {
-    const doc = new DOMParser().parseFromString(html, 'text/html');
-    const h3s = Array.from(doc.querySelectorAll('H3'));
-    const folders = [];
-    h3s.forEach(h3 => {
-      const list = h3.nextElementSibling;
-      if (!list || list.tagName !== 'DL') return;
-      const bms = [];
-      list.querySelectorAll(':scope > DT > A').forEach(a => {
-        bms.push({ id: uid(), title: a.textContent.trim(), url: a.getAttribute('HREF') || '', note: '' });
-      });
-      if (bms.length) {
-        folders.push({ id: uid(), name: h3.textContent.trim(), icon: '📁', collapsed: false, viewMode: 'grid', columns: 4, maxRows: 0, bookmarks: bms });
-      }
-    });
-    if (folders.length === 0) { toast('沒有找到書籤資料夾'); return; }
-    const mode = confirm(`找到 ${folders.length} 個資料夾、共 ${folders.reduce((s,f)=>s+f.bookmarks.length,0)} 個書籤。\n\n確定=附加到目前書籤\n取消=取代目前書籤`);
-    if (mode) state.folders = state.folders.concat(folders);
-    else state.folders = folders;
-    save(); render(); toast('已匯入瀏覽器書籤');
-  } catch(e) { toast('解析失敗：' + e.message); }
-}
+                bookmarks.forEach(bm => {
+                    const el = document.createElement('div');
+                    el.className = 'bookmark-card';
+                    el.innerHTML = `
+                        <div class="actions">
+                            <button class="btn-icon btn-edit-bm" data-id="${bm.id}">✏️</button>
+                            <button class="btn-icon btn-del-bm" data-id="${bm.id}">🗑️</button>
+                        </div>
+                        <div class="title">${bm.title}</div>
+                        <div class="url">${bm.url}</div>
+                    `;
+                    el.ondblclick = () => window.open(bm.url, '_blank');
+                    
+                    // DnD
+                    this.dnd.makeDraggable(el, 'bookmark', bm.id);
 
-function closeModal(id){ document.getElementById(id).classList.remove('show'); }
-function escape(s){ return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
-function toast(msg){
-  const t = document.getElementById('toast');
-  t.textContent = msg; t.classList.add('show');
-  clearTimeout(toast._t);
-  toast._t = setTimeout(() => t.classList.remove('show'), 1800);
-}
+                    // Actions
+                    el.querySelector('.btn-edit-bm').onclick = (e) => { e.stopPropagation(); this._showBookmarkModal(bm); };
+                    el.querySelector('.btn-del-bm').onclick = (e) => { e.stopPropagation(); this.bus.emit('bookmark:delete', bm.id); };
 
-document.getElementById('search').addEventListener('input', e => {
-  searchTerm = e.target.value; render();
-});
-document.querySelectorAll('.modal-bg').forEach(m => {
-  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('show'); });
-});
-document.addEventListener('keydown', e => {
-  if (e.key === 'Escape') document.querySelectorAll('.modal-bg.show').forEach(m => m.classList.remove('show'));
-  if ((e.ctrlKey || e.metaKey) && e.key === 'k') { e.preventDefault(); document.getElementById('search').focus(); }
-});
+                    this.bookmarkGridEl.appendChild(el);
+                });
+            }
 
-load();
-render();
-</script>
+            _showFolderModal(folder = null) {
+                const isEdit = !!folder;
+                const html = `
+                    <h3>${isEdit ? 'Edit' : 'New'} Folder</h3>
+                    <input type="text" id="input-folder-name" placeholder="Folder Name" value="${isEdit ? folder.name : ''}">
+                    <div class="modal-actions">
+                        <button class="btn-danger" onclick="app.modal.close()">Cancel</button>
+                        <button id="btn-save-folder">Save</button>
+                    </div>
+                `;
+                this.modal.open(html);
+                document.getElementById('btn-save-folder').onclick = () => {
+                    const name = document.getElementById('input-folder-name').value.trim();
+                    if (name) {
+                        this.bus.emit('folder:save', { id: isEdit ? folder.id : null, name });
+                        this.modal.close();
+                    }
+                };
+            }
+
+            _showBookmarkModal(bookmark = null) {
+                const isEdit = !!bookmark;
+                const html = `
+                    <h3>${isEdit ? 'Edit' : 'New'} Bookmark</h3>
+                    <input type="text" id="input-bm-title" placeholder="Title" value="${isEdit ? bookmark.title : ''}">
+                    <input type="url" id="input-bm-url" placeholder="https://example.com" value="${isEdit ? bookmark.url : ''}">
+                    <div class="modal-actions">
+                        <button class="btn-danger" onclick="app.modal.close()">Cancel</button>
+                        <button id="btn-save-bm">Save</button>
+                    </div>
+                `;
+                this.modal.open(html);
+                document.getElementById('btn-save-bm').onclick = () => {
+                    const title = document.getElementById('input-bm-title').value.trim();
+                    const url = document.getElementById('input-bm-url').value.trim();
+                    if (title && url) {
+                        this.bus.emit('bookmark:save', { id: isEdit ? bookmark.id : null, title, url });
+                        this.modal.close();
+                    }
+                };
+            }
+        }
+
+        // 9. MAIN APP CONTROLLER (Orchestrator)
+        class App {
+            constructor() {
+                this.bus = new EventBus();
+                this.store = new StateManager(this.bus);
+                this.modal = new ModalController();
+                this.dnd = new DragDropController(this.store, this.bus);
+                this.themeEngine = new ThemeEngine(this.store, this.bus);
+                this.qrService = new QRService(this.modal);
+                this.ui = new UIRenderer(this.store, this.bus, this.modal, this.dnd);
+                
+                this._bindEvents();
+                this._bindUI();
+                this.themeEngine.init();
+                this.ui.renderAll();
+            }
+
+            _bindUI() {
+                document.getElementById('btn-add-folder').onclick = () => this.ui._showFolderModal();
+                document.getElementById('btn-add-bookmark').onclick = () => this.ui._showBookmarkModal();
+                document.getElementById('btn-share-qr').onclick = () => {
+                    // Share only the current folder's bookmarks for cleaner QR
+                    const state = this.store.getState();
+                    const data = {
+                        folder: state.folders.find(f => f.id === state.activeFolder),
+                        bookmarks: state.bookmarks.filter(b => b.folderId === state.activeFolder)
+                    };
+                    this.qrService.show(data);
+                };
+            }
+
+            _bindEvents() {
+                this.bus.on('state:changed', () => this.ui.renderAll());
+
+                this.bus.on('folder:select', (id) => {
+                    this.store.update('activeFolder', id);
+                });
+
+                this.bus.on('folder:save', ({ id, name }) => {
+                    const state = this.store.getState();
+                    if (id) {
+                        state.folders = state.folders.map(f => f.id === id ? { ...f, name } : f);
+                    } else {
+                        state.folders.push({ id: Utils.generateId(), name, order: state.folders.length });
+                    }
+                    this.store.update('folders', state.folders);
+                });
+
+                this.bus.on('folder:delete', (id) => {
+                    if (!confirm('Delete folder and all its bookmarks?')) return;
+                    const state = this.store.getState();
+                    state.folders = state.folders.filter(f => f.id !== id);
+                    state.bookmarks = state.bookmarks.filter(b => b.folderId !== id);
+                    if (state.activeFolder === id) state.activeFolder = 'default';
+                    this.store.update('folders', state.folders);
+                    this.store.update('bookmarks', state.bookmarks);
+                    this.store.update('activeFolder', state.activeFolder);
+                });
+
+                this.bus.on('bookmark:save', ({ id, title, url }) => {
+                    const state = this.store.getState();
+                    if (id) {
+                        state.bookmarks = state.bookmarks.map(b => b.id === id ? { ...b, title, url } : b);
+                    } else {
+                        state.bookmarks.push({ 
+                            id: Utils.generateId(), 
+                            folderId: state.activeFolder, 
+                            title, url, 
+                            order: state.bookmarks.length 
+                        });
+                    }
+                    this.store.update('bookmarks', state.bookmarks);
+                });
+
+                this.bus.on('bookmark:delete', (id) => {
+                    const state = this.store.getState();
+                    state.bookmarks = state.bookmarks.filter(b => b.id !== id);
+                    this.store.update('bookmarks', state.bookmarks);
+                });
+
+                this.bus.on('bookmark:move', ({ bookmarkId, targetFolderId }) => {
+                    const state = this.store.getState();
+                    state.bookmarks = state.bookmarks.map(b => 
+                        b.id === bookmarkId ? { ...b, folderId: targetFolderId } : b
+                    );
+                    this.store.update('bookmarks', state.bookmarks);
+                });
+            }
+        }
+
+        // Initialize Application
+        const app = new App();
+    </script>
 </body>
 </html>
