@@ -112,6 +112,10 @@
         }
         .bookmark-card:hover { transform: translateY(-2px); box-shadow: 0 4px 6px var(--shadow); }
         .bookmark-card.dragging { opacity: 0.5; cursor: grabbing; }
+        .bookmark-card.drop-placeholder {
+            border: 2px dashed var(--accent); background: transparent;
+            opacity: 0.5; box-shadow: none; transform: none; cursor: grabbing;
+        }
         .bookmark-card .title { font-weight: 600; word-break: break-word; }
         .bookmark-card .actions {
             position: absolute; top: 5px; right: 5px; display: none; gap: 4px;
@@ -360,6 +364,7 @@
                 this.store = store;
                 this.bus = bus;
                 this.draggedItem = null;
+                this.placeholder = null;
             }
             /** @param {HTMLElement} el @param {string} type @param {string} id */
             makeDraggable(el, type, id) {
@@ -368,12 +373,73 @@
                     this.draggedItem = { type, id };
                     el.classList.add('dragging');
                     e.dataTransfer.effectAllowed = 'move';
+                    e.dataTransfer.setData('text/plain', `${type}:${id}`);
                 };
-                el.ondragend = () => { el.classList.remove('dragging'); this.draggedItem = null; };
+                el.ondragend = () => {
+                    el.classList.remove('dragging');
+                    this.draggedItem = null;
+                    this._clearPlaceholder();
+                };
+            }
+            _clearPlaceholder() {
+                if (this.placeholder && this.placeholder.parentNode) {
+                    this.placeholder.parentNode.removeChild(this.placeholder);
+                }
+            }
+            _getPlaceholder() {
+                if (!this.placeholder) {
+                    const ph = document.createElement('div');
+                    ph.className = 'bookmark-card drop-placeholder';
+                    this.placeholder = ph;
+                }
+                return this.placeholder;
+            }
+            /** Element to insert placeholder before (null = append at end) */
+            _getAfterElement(container, x, y) {
+                const els = [...container.querySelectorAll('.bookmark-card:not(.dragging):not(.drop-placeholder)')];
+                if (els.length === 0) return null;
+                // 1) Same row as pointer: first card whose center is right of pointer
+                for (const child of els) {
+                    const box = child.getBoundingClientRect();
+                    const dy = y - (box.top + box.height / 2);
+                    if (Math.abs(dy) <= box.height / 2 + 2 && x < box.left + box.width / 2) return child;
+                }
+                // 2) Pointer above the first row -> insert before first card
+                if (y < els[0].getBoundingClientRect().top) return els[0];
+                // 3) Below last row / right of all cards -> append
+                return null;
+            }
+            /** Drag-to-reorder zone (bookmark grid) */
+            makeReorderZone(container) {
+                container.ondragover = (e) => {
+                    if (!this.draggedItem || this.draggedItem.type !== 'bookmark') return;
+                    e.preventDefault();
+                    e.dataTransfer.dropEffect = 'move';
+                    const after = this._getAfterElement(container, e.clientX, e.clientY);
+                    const ph = this._getPlaceholder();
+                    if (after == null) container.appendChild(ph);
+                    else container.insertBefore(ph, after);
+                };
+                container.ondrop = (e) => {
+                    if (!this.draggedItem || this.draggedItem.type !== 'bookmark') return;
+                    e.preventDefault();
+                    const ph = this.placeholder;
+                    if (!ph || ph.parentNode !== container) return;
+                    const draggedId = this.draggedItem.id;
+                    // Count non-placeholder, non-dragged cards before the placeholder
+                    let idx = 0;
+                    let node = ph.previousElementSibling;
+                    while (node) {
+                        if (!node.classList.contains('drop-placeholder') && node.dataset.bmId !== draggedId) idx++;
+                        node = node.previousElementSibling;
+                    }
+                    this.bus.emit('bookmark:reorder', { bookmarkId: draggedId, newIndex: idx });
+                    this._clearPlaceholder();
+                };
             }
             /** @param {HTMLElement} el @param {string} targetFolderId */
             makeDropTarget(el, targetFolderId) {
-                el.ondragover = (e) => { e.preventDefault(); el.classList.add('drag-over'); };
+                el.ondragover = (e) => { e.preventDefault(); e.dataTransfer.dropEffect = 'move'; el.classList.add('drag-over'); };
                 el.ondragleave = () => el.classList.remove('drag-over');
                 el.ondrop = (e) => {
                     e.preventDefault();
@@ -402,6 +468,7 @@
                 this.folderListEl = document.getElementById('folder-list');
                 this.bookmarkGridEl = document.getElementById('bookmark-grid');
                 this.titleEl = document.getElementById('current-folder-title');
+                this.dnd.makeReorderZone(this.bookmarkGridEl);
             }
 
             renderAll() {
@@ -459,6 +526,7 @@
                 bookmarks.forEach(bm => {
                     const el = document.createElement('div');
                     el.className = 'bookmark-card';
+                    el.dataset.bmId = bm.id;
                     // Removed URL display as requested
                     el.innerHTML = `
                         <div class="actions">
@@ -644,9 +712,28 @@
 
                 this.bus.on('bookmark:move', ({ bookmarkId, targetFolderId }) => {
                     const state = this.store.getState();
+                    // Append at end of target folder
+                    const maxOrder = state.bookmarks
+                        .filter(b => b.folderId === targetFolderId && b.id !== bookmarkId)
+                        .reduce((m, b) => Math.max(m, b.order), -1);
                     state.bookmarks = state.bookmarks.map(b => 
-                        b.id === bookmarkId ? { ...b, folderId: targetFolderId } : b
+                        b.id === bookmarkId ? { ...b, folderId: targetFolderId, order: maxOrder + 1 } : b
                     );
+                    this.store.update('bookmarks', state.bookmarks);
+                });
+
+                // Bookmark reordering within the active folder
+                this.bus.on('bookmark:reorder', ({ bookmarkId, newIndex }) => {
+                    const state = this.store.getState();
+                    const inFolder = state.bookmarks
+                        .filter(b => b.folderId === state.activeFolder)
+                        .sort((a, b) => a.order - b.order);
+                    const from = inFolder.findIndex(b => b.id === bookmarkId);
+                    if (from === -1) return;
+                    const [moved] = inFolder.splice(from, 1);
+                    const to = Math.max(0, Math.min(newIndex, inFolder.length));
+                    inFolder.splice(to, 0, moved);
+                    inFolder.forEach((b, i) => b.order = i);
                     this.store.update('bookmarks', state.bookmarks);
                 });
 
